@@ -8,23 +8,23 @@ import javafx.scene.control.Label;
 import javafx.scene.control.ScrollPane;
 import javafx.scene.control.TextField;
 import javafx.scene.layout.GridPane;
-import javafx.scene.layout.HBox;
 import javafx.scene.layout.VBox;
 
 /**
- * Presenta y permite editar una matriz de adyacencia.
+ * Presenta una matriz de adyacencia y permite editarla cuando está habilitada.
  */
 public class PanelMatriz extends ScrollPane {
 
     private TextField[][] celdas = new TextField[0][0];
     private MatrizAdyacencia matrizMostrada;
     private boolean actualizando;
+    private boolean editable = true;
     private Consumer<EdicionCelda> receptor;
 
     private final GridPane tabla = new GridPane();
     private final Label mensajeError = new Label();
 
-    // Construye el panel desplazable que contiene la matriz editable.
+    // Construye el panel desplazable que contiene la matriz.
     // Entrada: ninguna; salida: panel de matriz inicializado.
     public PanelMatriz() {
         tabla.setHgap(6);
@@ -44,7 +44,7 @@ public class PanelMatriz extends ScrollPane {
         setPrefViewportHeight(360);
     }
 
-    // Muestra las etiquetas y los valores de una matriz.
+    // Muestra las etiquetas y valores de una matriz.
     // Entrada: matriz que se desea presentar; salida: no devuelve valor.
     public void mostrar(MatrizAdyacencia matriz) {
         actualizando = true;
@@ -97,6 +97,17 @@ public class PanelMatriz extends ScrollPane {
         }
     }
 
+    // Define si las celdas permiten edición.
+    // Entrada: true para editar o false para solo lectura; salida: no devuelve valor.
+    public void setEditable(boolean editable) {
+        this.editable = editable;
+        for (TextField[] fila : celdas) {
+            for (TextField celda : fila) {
+                celda.setEditable(editable);
+            }
+        }
+    }
+
     // Registra el consumidor que recibirá las ediciones confirmadas.
     // Entrada: consumidor de ediciones o null para desconectarlo; salida: no devuelve valor.
     public void alEditarCelda(Consumer<EdicionCelda> receptor) {
@@ -116,9 +127,7 @@ public class PanelMatriz extends ScrollPane {
         for (TextField[] fila : celdas) {
             for (TextField celda : fila) {
                 celda.setOnAction(null);
-                celda.focusedProperty().addListener(
-                        (observable, anterior, enfocado) -> {
-                        });
+                celda.setEditable(false);
             }
         }
         celdas = new TextField[0][0];
@@ -127,11 +136,12 @@ public class PanelMatriz extends ScrollPane {
     }
 
     // Crea un campo de texto y conecta sus eventos de confirmación.
-    // Entrada: fila, columna y valor inicial; salida: campo editable.
+    // Entrada: fila, columna y valor inicial; salida: campo editable o de solo lectura.
     protected TextField crearCelda(int fila, int columna, double valor) {
         TextField celda = new TextField(Double.toString(valor));
         celda.setPrefColumnCount(7);
         celda.setAlignment(Pos.CENTER_RIGHT);
+        celda.setEditable(editable);
 
         celda.setOnAction(evento ->
                 confirmarEdicion(fila, columna, celda.getText()));
@@ -149,7 +159,7 @@ public class PanelMatriz extends ScrollPane {
     // Convierte y envía el valor escrito para una celda.
     // Entrada: fila, columna y texto escrito; salida: no devuelve valor.
     private void confirmarEdicion(int fila, int columna, String texto) {
-        if (actualizando || matrizMostrada == null
+        if (!editable || actualizando || matrizMostrada == null
                 || fila >= matrizMostrada.size()
                 || columna >= matrizMostrada.size()) {
             return;
