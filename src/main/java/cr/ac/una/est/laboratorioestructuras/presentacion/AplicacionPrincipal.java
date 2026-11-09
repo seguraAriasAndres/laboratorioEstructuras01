@@ -54,6 +54,21 @@ public class AplicacionPrincipal extends Application {
                 recorrido);
         controlador.inicializar();
 
+        ToggleGroup grupoModo = new ToggleGroup();
+        ToggleButton modoMatriz = new ToggleButton("Matriz → Grafo");
+        ToggleButton modoDibujo = new ToggleButton("Dibujar → Matriz");
+        modoMatriz.setToggleGroup(grupoModo);
+        modoDibujo.setToggleGroup(grupoModo);
+
+        Label instruccionModo = new Label();
+        HBox controlesModo = new HBox(
+                8,
+                new Label("Opción:"),
+                modoMatriz,
+                modoDibujo,
+                instruccionModo);
+        controlesModo.setPadding(new Insets(6));
+
         TextField cantidad = new TextField("5");
         cantidad.setPrefColumnCount(4);
         CheckBox dirigido = new CheckBox("Dirigido");
@@ -136,14 +151,22 @@ public class AplicacionPrincipal extends Application {
                 redistribuir);
         controlesRecorrido.setPadding(new Insets(6));
 
+        modoMatriz.setOnAction(evento ->
+                actualizarModo(true, controlesDibujo, instruccionModo));
+        modoDibujo.setOnAction(evento ->
+                actualizarModo(false, controlesDibujo, instruccionModo));
+        modoMatriz.setSelected(true);
+        actualizarModo(true, controlesDibujo, instruccionModo);
+
         VBox barra = new VBox(
+                controlesModo,
                 controlesNuevo,
                 controlesDibujo,
                 controlesRecorrido);
 
         VBox panelLateral = new VBox(
                 8,
-                new Label("Matriz editable"),
+                new Label("Matriz de adyacencia"),
                 matriz,
                 new Label("Resultado del recorrido"),
                 recorrido);
@@ -173,6 +196,20 @@ public class AplicacionPrincipal extends Application {
         if (controlador != null) {
             controlador.dispose();
         }
+    }
+
+    // Actualiza la edición disponible según la opción seleccionada.
+    // Entrada: modo matricial, controles de dibujo y etiqueta; salida: no devuelve valor.
+    private void actualizarModo(
+            boolean modoMatriz,
+            HBox controlesDibujo,
+            Label instruccionModo) {
+        controlador.setModoMatriz(modoMatriz);
+        controlesDibujo.setDisable(modoMatriz);
+
+        instruccionModo.setText(modoMatriz
+                ? "Edita la matriz para actualizar el grafo."
+                : "Edita el dibujo; la matriz se actualiza como resultado.");
     }
 
     // Crea un botón de herramienta conectado al controlador.
