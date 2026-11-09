@@ -29,6 +29,7 @@ public class ControladorGrafo implements GrafoListener {
 
     private MatrizAdyacencia matrizActual;
     private boolean actualizando;
+    private boolean modoMatriz = true;
     private HerramientaEdicion herramienta = HerramientaEdicion.SELECCIONAR;
     private Integer origenConexion;
     private Integer nodoArrastrado;
@@ -63,7 +64,21 @@ public class ControladorGrafo implements GrafoListener {
         servicio.getGrafo().addListener(this);
         matriz.alEditarCelda(this::editarCelda);
         dibujo.instalarManejador(manejadorMouse);
+        matriz.setEditable(modoMatriz);
         actualizarVistas(TipoCambio.TOPOLOGIA);
+    }
+
+    // Activa el flujo de matriz o el flujo de dibujo.
+    // Entrada: true para Matriz a Grafo o false para Dibujar a Matriz; salida: no devuelve valor.
+    public void setModoMatriz(boolean modoMatriz) {
+        this.modoMatriz = modoMatriz;
+        matriz.setEditable(modoMatriz);
+
+        if (modoMatriz) {
+            origenConexion = null;
+            nodoArrastrado = null;
+            huboArrastre = false;
+        }
     }
 
     // Actualiza las vistas cuando el grafo notifica un cambio.
@@ -79,7 +94,7 @@ public class ControladorGrafo implements GrafoListener {
     // Dirige cada evento del mouse al proceso correspondiente.
     // Entrada: evento del mouse; salida: no devuelve valor.
     public void handle(MouseEvent evento) {
-        if (evento == null) {
+        if (modoMatriz || evento == null) {
             return;
         }
 
@@ -322,8 +337,10 @@ public class ControladorGrafo implements GrafoListener {
         }
 
         Point2D punto = dibujo.posicionLocal(evento);
-        String etiqueta = siguienteEtiqueta();
-        servicio.agregarNodo(etiqueta, punto.getX(), punto.getY());
+        servicio.agregarNodo(
+                siguienteEtiqueta(),
+                punto.getX(),
+                punto.getY());
         evento.consume();
     }
 
