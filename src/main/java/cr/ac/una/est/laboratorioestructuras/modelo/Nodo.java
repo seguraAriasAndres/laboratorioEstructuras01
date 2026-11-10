@@ -1,8 +1,6 @@
 package cr.ac.una.est.laboratorioestructuras.modelo;
 
-/**
- * Vértice del grafo con identificador, etiqueta y posición.
- */
+//Acá guardamos los datos de un nodo y dónde está dibujado.
 public class Nodo {
 
     private final int id;
@@ -10,48 +8,49 @@ public class Nodo {
     private double x;
     private double y;
 
-    // Crea un nodo con su identidad, etiqueta y coordenadas iniciales.
-    // Entrada: ID, etiqueta y coordenadas; salida: nodo inicializado.
+    //Creamos el nodo con su ID, nombre y posición.
     public Nodo(int id, String etiqueta, double x, double y) {
+        if (id < 0 || id == Integer.MAX_VALUE) {
+            throw new IllegalArgumentException("El ID del nodo debe estar entre 0 y 2147483646");
+        }
+        if (etiqueta == null || etiqueta.isBlank()) {
+            throw new IllegalArgumentException("La etiqueta del nodo es obligatoria");
+        }
         this.id = id;
         this.etiqueta = etiqueta;
-        this.x = x;
-        this.y = y;
+        setPosicion(x, y);
     }
 
-    // Devuelve el identificador del nodo.
-    // Entrada: ninguna; salida: ID del nodo.
+    //Nos da el ID del nodo.
     public int getId() {
         return id;
     }
 
-    // Devuelve la etiqueta del nodo.
-    // Entrada: ninguna; salida: etiqueta del nodo.
+    //Nos da el nombre que se muestra en el dibujo.
     public String getEtiqueta() {
         return etiqueta;
     }
 
-    // Devuelve la coordenada horizontal del nodo.
-    // Entrada: ninguna; salida: coordenada x.
+    //Nos da la posición horizontal del nodo.
     public double getX() {
         return x;
     }
 
-    // Devuelve la coordenada vertical del nodo.
-    // Entrada: ninguna; salida: coordenada y.
+    //Nos da la posición vertical del nodo.
     public double getY() {
         return y;
     }
 
-    // Actualiza ambas coordenadas del nodo.
-    // Entrada: coordenadas nuevas; salida: no devuelve valor.
+    //Movemos el nodo a estas coordenadas.
     void setPosicion(double x, double y) {
+        if (!Double.isFinite(x) || !Double.isFinite(y)) {
+            throw new IllegalArgumentException("Las coordenadas deben ser finitas");
+        }
         this.x = x;
         this.y = y;
     }
 
-    // Genera una representación textual del nodo.
-    // Entrada: ninguna; salida: texto con ID, etiqueta y coordenadas.
+    //Armamos un texto con los datos del nodo para poder revisarlo.
     @Override
     public String toString() {
         return "Nodo{" + id + " '" + etiqueta + "' (" + x + ", " + y + ")}";

@@ -1,11 +1,9 @@
 package cr.ac.una.est.laboratorioestructuras.modelo;
 
-/**
- * Motivo por el cual un {@link Grafo} notifico a sus oyentes.
- */
+//Con esto avisamos qué fue lo que cambió en el grafo.
 public enum TipoCambio {
-    /** Cambio en nodos o aristas (alta, baja, reconexion). */
+    //Cambiaron los nodos, las conexiones o sus pesos.
     TOPOLOGIA,
-    /** Cambio solo de coordenadas de nodos. */
+    //Solo se movieron los nodos.
     POSICION
 }

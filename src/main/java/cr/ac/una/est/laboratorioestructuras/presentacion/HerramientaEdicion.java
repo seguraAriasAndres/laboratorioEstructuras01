@@ -1,8 +1,6 @@
 package cr.ac.una.est.laboratorioestructuras.presentacion;
 
-/**
- * Herramientas disponibles para interactuar con el dibujo del grafo.
- */
+//Estas son las herramientas que podemos usar en el dibujo.
 public enum HerramientaEdicion {
     SELECCIONAR,
     CREAR_NODO,

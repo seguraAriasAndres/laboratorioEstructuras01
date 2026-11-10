@@ -10,17 +10,14 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
-/**
- * Coordina operaciones de aplicación sobre el grafo.
- */
+//Acá juntamos las operaciones que la ventana le pide al grafo.
 public class GrafoService {
 
     private final Grafo grafo;
     private final ConversorRepresentaciones conversor;
     private final DistribuidorCircular distribuidor;
 
-    // Crea el servicio con el grafo y sus colaboradores requeridos.
-    // Entrada: grafo, conversor y distribuidor; salida: servicio inicializado.
+    //Guardamos el grafo y las clases que nos ayudan a convertirlo y acomodarlo.
     public GrafoService(
             Grafo grafo,
             ConversorRepresentaciones conversor,
@@ -35,14 +32,12 @@ public class GrafoService {
         this.distribuidor = distribuidor;
     }
 
-    // Devuelve el grafo administrado por el servicio.
-    // Entrada: ninguna; salida: instancia del grafo.
+    //Nos da el grafo con el que estamos trabajando.
     public Grafo getGrafo() {
         return grafo;
     }
 
-    // Reinicia el grafo, crea nodos y los distribuye en el área indicada.
-    // Entrada: dirección, cantidad y dimensiones; salida: no devuelve valor.
+    //Creamos un grafo desde cero y acomodamos sus nodos.
     public void crearNuevo(
             boolean dirigido,
             int cantidad,
@@ -53,44 +48,37 @@ public class GrafoService {
         redistribuir(ancho, alto);
     }
 
-    // Agrega un nodo con la etiqueta y posición indicadas.
-    // Entrada: etiqueta y coordenadas; salida: nodo agregado.
+    //Agregamos un nodo con su nombre y posición.
     public Nodo agregarNodo(String etiqueta, double x, double y) {
         return grafo.agregarNodo(etiqueta, x, y);
     }
 
-    // Conecta dos nodos existentes.
-    // Entrada: IDs de origen y destino, y peso; salida: arista agregada.
+    //Unimos los dos nodos con el peso que nos pasaron.
     public Arista conectar(int origenId, int destinoId, double peso) {
         return grafo.conectar(origenId, destinoId, peso);
     }
 
-    // Elimina un nodo y sus aristas incidentes.
-    // Entrada: ID del nodo; salida: no devuelve valor.
+    //Borramos el nodo junto con sus conexiones.
     public void eliminarNodo(int id) {
         grafo.eliminarNodo(id);
     }
 
-    // Elimina una arista por su ID.
-    // Entrada: ID de la arista; salida: no devuelve valor.
+    //Borramos la arista usando su ID.
     public void eliminarArista(int id) {
         grafo.eliminarArista(id);
     }
 
-    // Cambia la posición de un nodo existente.
-    // Entrada: ID y coordenadas nuevas; salida: no devuelve valor.
+    //Cambiamos de lugar el nodo.
     public void moverNodo(int id, double x, double y) {
         grafo.moverNodo(id, x, y);
     }
 
-    // Exporta el grafo a una matriz de adyacencia.
-    // Entrada: ninguna; salida: matriz que representa el grafo actual.
+    //Sacamos la matriz del grafo actual.
     public MatrizAdyacencia exportarMatriz() {
         return conversor.aMatriz(grafo);
     }
 
-    // Aplica una matriz y distribuye los nodos que sean nuevos.
-    // Entrada: matriz y dimensiones del área; salida: no devuelve valor.
+    //Cargamos la matriz y buscamos un lugar para los nodos nuevos.
     public void aplicarMatriz(
             MatrizAdyacencia matriz,
             double ancho,
@@ -100,14 +88,12 @@ public class GrafoService {
         posicionarNuevos(idsNuevos, ancho, alto);
     }
 
-    // Exporta el grafo como mapa de listas de adyacencia.
-    // Entrada: ninguna; salida: mapa de vecinos y pesos.
+    //Sacamos la lista de vecinos y pesos del grafo.
     public Map<Integer, Map<Integer, Double>> exportarLista() {
         return conversor.aListaAdyacencia(grafo);
     }
 
-    // Importa una lista de adyacencia y posiciona sus nodos nuevos.
-    // Entrada: lista, dirección y dimensiones; salida: no devuelve valor.
+    //Cargamos una lista de adyacencia y acomodamos los nodos nuevos.
     public void importarLista(
             Map<Integer, Map<Integer, Double>> lista,
             boolean dirigido,
@@ -119,8 +105,7 @@ public class GrafoService {
         aplicarMatriz(matriz, ancho, alto);
     }
 
-    // Distribuye todos los nodos actuales en forma circular.
-    // Entrada: dimensiones del área; salida: no devuelve valor.
+    //Acomodamos todos los nodos en un círculo.
     public void redistribuir(double ancho, double alto) {
         validarDimensiones(ancho, alto);
 
@@ -134,8 +119,7 @@ public class GrafoService {
         grafo.moverNodos(posiciones);
     }
 
-    // Distribuye los nodos indicados respetando el orden del grafo.
-    // Entrada: IDs nuevos y dimensiones del área; salida: no devuelve valor.
+    //Acomodamos solo los nodos nuevos, siguiendo el orden que tienen en el grafo.
     public void posicionarNuevos(
             Set<Integer> ids,
             double ancho,
@@ -158,8 +142,7 @@ public class GrafoService {
         grafo.moverNodos(posiciones);
     }
 
-    // Comprueba que las dimensiones sean finitas y no negativas.
-    // Entrada: ancho y alto; salida: no devuelve valor o lanza excepción.
+    //Revisamos que el tamaño del área sea válido.
     private void validarDimensiones(double ancho, double alto) {
         if (!Double.isFinite(ancho) || !Double.isFinite(alto)
                 || ancho < 0 || alto < 0) {

@@ -1,8 +1,6 @@
 package cr.ac.una.est.laboratorioestructuras.modelo;
 
-/**
- * Oyente de cambios del grafo. La vista se suscribe aqui para redibujarse.
- */
+//La vista usa esto para enterarse de los cambios y volver a dibujar el grafo.
 @FunctionalInterface
 public interface GrafoListener {
 

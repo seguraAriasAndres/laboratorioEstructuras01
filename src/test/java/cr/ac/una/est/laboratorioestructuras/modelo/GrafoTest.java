@@ -8,8 +8,64 @@ import org.junit.jupiter.api.Test;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.junit.jupiter.api.Assertions.assertSame;
 
 class GrafoTest {
+
+    @Test
+    void reconectarActualizaPesoSinPerderIdentidadNiDuplicar() {
+        Grafo g = new Grafo(false);
+        g.reiniciar(false, 2);
+        Arista original = g.conectar(0, 1, 2);
+        assertSame(original, g.conectar(1, 0, -3));
+        assertEquals(1, g.getAristas().size());
+        assertEquals(-3, original.getPeso());
+        g.reiniciar(true, 2);
+        g.conectar(0, 1, 1);
+        g.conectar(1, 0, 2);
+        assertEquals(2, g.getAristas().size());
+    }
+
+    @Test
+    void datosInvalidosNoModificanElGrafoNiConsumenIds() {
+        Grafo g = new Grafo(true);
+        assertThrows(IllegalArgumentException.class, () -> g.agregarNodo(null, 0, 0));
+        assertThrows(IllegalArgumentException.class, () -> g.agregarNodo("X", Double.NaN, 0));
+        assertEquals(0, g.agregarNodo("A", 0, 0).getId());
+        assertThrows(IllegalArgumentException.class, () -> g.conectar(0, 0, 0));
+        assertThrows(IllegalArgumentException.class, () -> g.conectar(0, 0, Double.POSITIVE_INFINITY));
+        assertEquals(0, g.conectar(0, 0, 1).getId());
+        assertThrows(IllegalArgumentException.class, () -> g.moverNodo(0, 2, Double.NaN));
+        assertEquals(0, g.buscarNodo(0).orElseThrow().getX());
+    }
+
+    @Test
+    void reemplazoAceptaVistasPropiasYRechazaAristasParalelasSinCambiarEstado() {
+        Grafo g = new Grafo(false);
+        Nodo a = g.agregarNodo("A", 1, 2);
+        Nodo b = g.agregarNodo("B", 3, 4);
+        Arista e = g.conectar(0, 1, 2);
+        g.reemplazarContenido(false, g.getNodos(), g.getAristas());
+        assertEquals(2, g.getNodos().size());
+        assertEquals(1, g.getAristas().size());
+        assertThrows(IllegalArgumentException.class, () -> g.reemplazarContenido(false,
+                List.of(a, b), List.of(e, new Arista(2, b, a, 7))));
+        assertEquals(2, g.getAristas().getFirst().getPeso());
+    }
+
+    @Test
+    void matrizRechazaNoFinitosYAsimetriaYCopiaSusDatos() {
+        double[][] valores = {{0, 2}, {2, 0}};
+        MatrizAdyacencia m = new MatrizAdyacencia(false, List.of(4, 8), List.of("A", "B"), valores);
+        valores[0][1] = 99;
+        assertEquals(2, m.getValor(0, 1));
+        MatrizAdyacencia editada = m.conValor(0, 1, -5);
+        assertEquals(-5, editada.getValor(1, 0));
+        assertEquals(2, m.getValor(1, 0));
+        assertThrows(IllegalArgumentException.class, () -> m.conValor(0, 0, Double.NaN));
+        assertThrows(IllegalArgumentException.class, () -> new MatrizAdyacencia(false,
+                List.of(0, 1), List.of("A", "B"), new double[][]{{0, 1}, {0, 0}}));
+    }
 
     @Test
     void agregaConectaYElimina() {

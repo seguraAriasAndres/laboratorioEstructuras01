@@ -14,10 +14,9 @@ import java.util.Set;
 import javafx.event.EventHandler;
 import javafx.geometry.Point2D;
 import javafx.scene.input.MouseEvent;
+import javafx.scene.input.MouseButton;
 
-/**
- * Coordina las acciones de la interfaz con los servicios del grafo.
- */
+//Acá conectamos lo que pasa en la ventana con las operaciones del grafo.
 public class ControladorGrafo implements GrafoListener {
 
     private final GrafoService servicio;
@@ -29,6 +28,7 @@ public class ControladorGrafo implements GrafoListener {
 
     private MatrizAdyacencia matrizActual;
     private boolean actualizando;
+    private boolean inicializado;
     private boolean modoMatriz = true;
     private HerramientaEdicion herramienta = HerramientaEdicion.SELECCIONAR;
     private Integer origenConexion;
@@ -37,8 +37,7 @@ public class ControladorGrafo implements GrafoListener {
     private boolean huboArrastre;
     private double pesoNuevaArista = 1.0;
 
-    // Crea el controlador con servicios y paneles ya construidos.
-    // Entrada: servicio, recorridos y paneles; salida: controlador inicializado.
+    //Guardamos los servicios y los paneles que vamos a usar.
     public ControladorGrafo(
             GrafoService servicio,
             RecorridoService recorridos,
@@ -58,9 +57,10 @@ public class ControladorGrafo implements GrafoListener {
         this.recorrido = recorrido;
     }
 
-    // Conecta los paneles y escucha los cambios del grafo.
-    // Entrada: ninguna; salida: no devuelve valor.
+    //Conectamos los paneles y nos apuntamos para recibir los cambios del grafo.
     public void inicializar() {
+        if (inicializado) return;
+        inicializado = true;
         servicio.getGrafo().addListener(this);
         matriz.alEditarCelda(this::editarCelda);
         dibujo.instalarManejador(manejadorMouse);
@@ -68,8 +68,7 @@ public class ControladorGrafo implements GrafoListener {
         actualizarVistas(TipoCambio.TOPOLOGIA);
     }
 
-    // Activa el flujo de matriz o el flujo de dibujo.
-    // Entrada: true para Matriz a Grafo o false para Dibujar a Matriz; salida: no devuelve valor.
+    //Elegimos si vamos a editar desde la matriz o desde el dibujo.
     public void setModoMatriz(boolean modoMatriz) {
         this.modoMatriz = modoMatriz;
         matriz.setEditable(modoMatriz);
@@ -81,8 +80,7 @@ public class ControladorGrafo implements GrafoListener {
         }
     }
 
-    // Actualiza las vistas cuando el grafo notifica un cambio.
-    // Entrada: grafo cambiado y tipo de cambio; salida: no devuelve valor.
+    //Si cambió nuestro grafo, ponemos al día los paneles.
     @Override
     public void grafoCambiado(Grafo grafo, TipoCambio tipo) {
         if (grafo != servicio.getGrafo() || actualizando) {
@@ -91,27 +89,32 @@ public class ControladorGrafo implements GrafoListener {
         actualizarVistas(tipo);
     }
 
-    // Dirige cada evento del mouse al proceso correspondiente.
-    // Entrada: evento del mouse; salida: no devuelve valor.
+    //Vemos qué hizo el mouse y mandamos el evento al método que toca.
     public void handle(MouseEvent evento) {
-        if (modoMatriz || evento == null) {
+        if (modoMatriz || evento == null || evento.getButton() != MouseButton.PRIMARY) {
             return;
         }
 
-        if (evento.getEventType() == MouseEvent.MOUSE_PRESSED) {
-            procesarPulsacion(evento);
-        } else if (evento.getEventType() == MouseEvent.MOUSE_DRAGGED) {
-            procesarArrastre(evento);
-        } else if (evento.getEventType() == MouseEvent.MOUSE_RELEASED) {
-            procesarLiberacion(evento);
-        } else if (evento.getEventType() == MouseEvent.MOUSE_CLICKED) {
-            procesarClick(evento);
+        try {
+            if (evento.getEventType() == MouseEvent.MOUSE_PRESSED) {
+                procesarPulsacion(evento);
+            } else if (evento.getEventType() == MouseEvent.MOUSE_DRAGGED) {
+                procesarArrastre(evento);
+            } else if (evento.getEventType() == MouseEvent.MOUSE_RELEASED) {
+                procesarLiberacion(evento);
+            } else if (evento.getEventType() == MouseEvent.MOUSE_CLICKED) {
+                procesarClick(evento);
+            }
+        } catch (IllegalArgumentException excepcion) {
+            origenConexion = null;
+            nodoArrastrado = null;
+            matriz.mostrarError(excepcion.getMessage());
         }
     }
 
-    // Reinicia el grafo y crea la cantidad solicitada de nodos.
-    // Entrada: dirección y cantidad; salida: no devuelve valor.
+    //Creamos un grafo nuevo con la cantidad de nodos que nos pidieron.
     public void crearNuevo(boolean dirigido, int cantidad) {
+        cancelarInteraccion();
         actualizando = true;
         try {
             servicio.crearNuevo(
@@ -125,8 +128,7 @@ public class ControladorGrafo implements GrafoListener {
         actualizarVistas(TipoCambio.TOPOLOGIA);
     }
 
-    // Aplica el valor editado a la matriz actual y actualiza el grafo.
-    // Entrada: edición con fila, columna y valor; salida: no devuelve valor.
+    //Tomamos el cambio de una celda y lo aplicamos al grafo.
     public void editarCelda(EdicionCelda edicion) {
         if (edicion == null || matrizActual == null) {
             throw new IllegalArgumentException(
@@ -144,8 +146,7 @@ public class ControladorGrafo implements GrafoListener {
                 edicion.valor()));
     }
 
-    // Aplica una matriz externa al grafo actual.
-    // Entrada: matriz de adyacencia; salida: no devuelve valor.
+    //Cargamos una matriz nueva en el grafo que estamos usando.
     public void cargarMatriz(MatrizAdyacencia matriz) {
         if (matriz == null) {
             throw new IllegalArgumentException("La matriz no puede ser null");
@@ -164,8 +165,7 @@ public class ControladorGrafo implements GrafoListener {
         actualizarVistas(TipoCambio.TOPOLOGIA);
     }
 
-    // Importa una lista de adyacencia al grafo actual.
-    // Entrada: lista y dirección; salida: no devuelve valor.
+    //Cargamos el grafo desde una lista de adyacencia.
     public void cargarLista(
             Map<Integer, Map<Integer, Double>> lista,
             boolean dirigido) {
@@ -183,30 +183,26 @@ public class ControladorGrafo implements GrafoListener {
         actualizarVistas(TipoCambio.TOPOLOGIA);
     }
 
-    // Ejecuta BFS y muestra y resalta su orden.
-    // Entrada: ID inicial; salida: no devuelve valor.
+    //Hacemos BFS, mostramos el orden y pintamos los nodos visitados.
     public void ejecutarBfs(int inicioId) {
         var orden = recorridos.bfs(servicio.getGrafo(), inicioId);
         recorrido.mostrar("BFS", orden, servicio.getGrafo());
         dibujo.resaltar(orden);
     }
 
-    // Ejecuta DFS y muestra y resalta su orden.
-    // Entrada: ID inicial; salida: no devuelve valor.
+    //Hacemos DFS, mostramos el orden y pintamos los nodos visitados.
     public void ejecutarDfs(int inicioId) {
         var orden = recorridos.dfs(servicio.getGrafo(), inicioId);
         recorrido.mostrar("DFS", orden, servicio.getGrafo());
         dibujo.resaltar(orden);
     }
 
-    // Distribuye todos los nodos en el área de dibujo.
-    // Entrada: ninguna; salida: no devuelve valor.
+    //Volvemos a acomodar los nodos dentro del dibujo.
     public void redistribuir() {
         servicio.redistribuir(anchoDisponible(), altoDisponible());
     }
 
-    // Cambia la herramienta activa y cancela acciones pendientes.
-    // Entrada: herramienta elegida; salida: no devuelve valor.
+    //Cambiamos la herramienta y cancelamos lo que haya quedado a medias.
     public void setHerramienta(HerramientaEdicion herramienta) {
         if (herramienta == null) {
             throw new IllegalArgumentException(
@@ -219,8 +215,7 @@ public class ControladorGrafo implements GrafoListener {
         huboArrastre = false;
     }
 
-    // Define el peso usado para las nuevas aristas.
-    // Entrada: peso finito distinto de cero; salida: no devuelve valor.
+    //Guardamos el peso que van a llevar las próximas conexiones.
     public void setPesoNuevaArista(double peso) {
         if (!Double.isFinite(peso) || peso == 0.0) {
             throw new IllegalArgumentException(
@@ -229,22 +224,24 @@ public class ControladorGrafo implements GrafoListener {
         pesoNuevaArista = peso;
     }
 
-    // Desconecta los paneles y deja de escuchar cambios del grafo.
-    // Entrada: ninguna; salida: no devuelve valor.
+    //Desconectamos los paneles y dejamos de recibir avisos del grafo.
     public void dispose() {
+        inicializado = false;
+        cancelarInteraccion();
         servicio.getGrafo().removeListener(this);
         dibujo.retirarManejador(manejadorMouse);
         matriz.desconectar();
+        dibujo.dispose();
     }
 
-    // Actualiza el dibujo y, cuando cambia la topología, también la matriz.
-    // Entrada: tipo de cambio; salida: no devuelve valor.
+    //Ponemos al día el dibujo; la matriz solo cambia si cambiaron nodos o conexiones.
     private void actualizarVistas(TipoCambio tipo) {
         actualizando = true;
         try {
             dibujo.reconciliar(servicio.getGrafo());
 
             if (tipo == TipoCambio.TOPOLOGIA) {
+                cancelarInteraccion();
                 matrizActual = servicio.exportarMatriz();
                 matriz.mostrar(matrizActual);
                 recorrido.limpiar();
@@ -255,8 +252,7 @@ public class ControladorGrafo implements GrafoListener {
         }
     }
 
-    // Inicia el arrastre de un nodo cuando está activa la selección.
-    // Entrada: evento de pulsación; salida: no devuelve valor.
+    //Si estamos seleccionando, agarramos el nodo para empezar a moverlo.
     private void procesarPulsacion(MouseEvent evento) {
         if (herramienta != HerramientaEdicion.SELECCIONAR) {
             nodoArrastrado = null;
@@ -281,23 +277,21 @@ public class ControladorGrafo implements GrafoListener {
         huboArrastre = false;
     }
 
-    // Mueve el nodo que se está arrastrando.
-    // Entrada: evento de arrastre; salida: no devuelve valor.
+    //Movemos el nodo siguiendo el mouse.
     private void procesarArrastre(MouseEvent evento) {
         if (nodoArrastrado == null) {
             return;
         }
 
         Point2D punto = dibujo.posicionLocal(evento);
-        double x = punto.getX() - desplazamientoArrastre.getX();
-        double y = punto.getY() - desplazamientoArrastre.getY();
+        double x = limitar(punto.getX() - desplazamientoArrastre.getX(), anchoDisponible());
+        double y = limitar(punto.getY() - desplazamientoArrastre.getY(), altoDisponible());
         servicio.moverNodo(nodoArrastrado, x, y);
         huboArrastre = true;
         evento.consume();
     }
 
-    // Finaliza el arrastre actual sin activar una acción de clic.
-    // Entrada: evento de liberación; salida: no devuelve valor.
+    //Soltamos el nodo cuando termina el arrastre.
     private void procesarLiberacion(MouseEvent evento) {
         if (nodoArrastrado != null) {
             nodoArrastrado = null;
@@ -305,8 +299,7 @@ public class ControladorGrafo implements GrafoListener {
         }
     }
 
-    // Ejecuta la herramienta activa sobre el elemento seleccionado.
-    // Entrada: evento de clic; salida: no devuelve valor.
+    //Revisamos dónde se hizo clic y usamos la herramienta que esté seleccionada.
     private void procesarClick(MouseEvent evento) {
         if (huboArrastre) {
             huboArrastre = false;
@@ -326,8 +319,7 @@ public class ControladorGrafo implements GrafoListener {
         }
     }
 
-    // Crea un nodo en el área vacía donde ocurrió el clic.
-    // Entrada: evento y detecciones de nodo y arista; salida: no devuelve valor.
+    //Si el clic fue en un espacio vacío, ponemos un nodo ahí.
     private void crearNodoEnClick(
             MouseEvent evento,
             OptionalInt idNodo,
@@ -339,13 +331,12 @@ public class ControladorGrafo implements GrafoListener {
         Point2D punto = dibujo.posicionLocal(evento);
         servicio.agregarNodo(
                 siguienteEtiqueta(),
-                punto.getX(),
-                punto.getY());
+                limitar(punto.getX(), anchoDisponible()),
+                limitar(punto.getY(), altoDisponible()));
         evento.consume();
     }
 
-    // Conecta dos nodos seleccionados en secuencia.
-    // Entrada: ID del nodo clicado o vacío; salida: no devuelve valor.
+    //El primer clic elige el origen y el segundo el destino de la conexión.
     private void conectarNodoEnClick(OptionalInt idNodo) {
         if (idNodo.isEmpty()) {
             origenConexion = null;
@@ -365,8 +356,7 @@ public class ControladorGrafo implements GrafoListener {
         origenConexion = null;
     }
 
-    // Elimina el nodo o la arista seleccionados.
-    // Entrada: IDs detectados por el dibujo; salida: no devuelve valor.
+    //Borramos el nodo o la arista donde se hizo clic.
     private void eliminarElementoEnClick(
             OptionalInt idNodo,
             OptionalInt idArista) {
@@ -377,8 +367,7 @@ public class ControladorGrafo implements GrafoListener {
         }
     }
 
-    // Obtiene el objeto JavaFX que originó el evento.
-    // Entrada: evento del mouse; salida: nodo JavaFX o null.
+    //Sacamos el objeto de la ventana que recibió el evento.
     private javafx.scene.Node obtenerObjeto(MouseEvent evento) {
         if (evento.getTarget() instanceof javafx.scene.Node objeto) {
             return objeto;
@@ -386,8 +375,7 @@ public class ControladorGrafo implements GrafoListener {
         return null;
     }
 
-    // Busca una etiqueta N disponible para el siguiente nodo.
-    // Entrada: ninguna; salida: etiqueta no usada con formato N seguido de número.
+    //Buscamos un nombre tipo N1 o N2 que todavía no esté usado.
     private String siguienteEtiqueta() {
         Set<String> etiquetasUsadas = new HashSet<>();
         for (Nodo nodo : servicio.getGrafo().getNodos()) {
@@ -401,16 +389,25 @@ public class ControladorGrafo implements GrafoListener {
         return "N" + indice;
     }
 
-    // Devuelve el ancho actual o preferido del panel de dibujo.
-    // Entrada: ninguna; salida: ancho disponible para distribuir nodos.
+    private void cancelarInteraccion() {
+        origenConexion = null;
+        nodoArrastrado = null;
+        huboArrastre = false;
+    }
+
+    private static double limitar(double valor, double dimension) {
+        double margen = Math.min(22, dimension / 2);
+        return Math.max(margen, Math.min(dimension - margen, valor));
+    }
+
+    //Usamos el ancho real del dibujo o el tamaño inicial si todavía no se ha mostrado.
     private double anchoDisponible() {
         return dibujo.getWidth() > 0
                 ? dibujo.getWidth()
                 : dibujo.getPrefWidth();
     }
 
-    // Devuelve el alto actual o preferido del panel de dibujo.
-    // Entrada: ninguna; salida: alto disponible para distribuir nodos.
+    //Usamos el alto real del dibujo o el tamaño inicial si todavía no se ha mostrado.
     private double altoDisponible() {
         return dibujo.getHeight() > 0
                 ? dibujo.getHeight()

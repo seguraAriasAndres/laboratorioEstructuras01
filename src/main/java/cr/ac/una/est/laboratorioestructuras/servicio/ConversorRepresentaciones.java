@@ -14,13 +14,10 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
-/**
- * Convierte grafos entre matrices y listas de adyacencia.
- */
+//Acá pasamos el grafo a matriz o lista, y también hacemos el camino de vuelta.
 public class ConversorRepresentaciones {
 
-    // Convierte un grafo a una matriz conservando el orden y los IDs de sus nodos.
-    // Entrada: grafo; salida: matriz de adyacencia inmutable.
+    //Pasamos el grafo a matriz sin perder el orden ni los IDs de sus nodos.
     public MatrizAdyacencia aMatriz(Grafo grafo) {
         if (grafo == null) {
             throw new IllegalArgumentException("El grafo no puede ser null");
@@ -64,8 +61,7 @@ public class ConversorRepresentaciones {
                 valores);
     }
 
-    // Crea un grafo nuevo a partir de una matriz de adyacencia.
-    // Entrada: matriz; salida: grafo con nodos y aristas representados en ella.
+    //Armamos un grafo nuevo usando los datos de la matriz.
     public Grafo desdeMatriz(MatrizAdyacencia matriz) {
         if (matriz == null) {
             throw new IllegalArgumentException("La matriz no puede ser null");
@@ -78,8 +74,7 @@ public class ConversorRepresentaciones {
         return grafo;
     }
 
-    // Aplica una matriz a un grafo y devuelve los IDs de los nodos recién agregados.
-    // Entrada: matriz y grafo destino; salida: conjunto inmutable de IDs nuevos.
+    //Cargamos la matriz en el grafo y devolvemos los IDs que se acaban de agregar.
     public Set<Integer> aplicarMatriz(
             MatrizAdyacencia matriz,
             Grafo destino) {
@@ -107,8 +102,7 @@ public class ConversorRepresentaciones {
         return Set.copyOf(idsNuevos);
     }
 
-    // Convierte un grafo en una lista de adyacencia con una fila por nodo.
-    // Entrada: grafo; salida: mapa inmutable de nodos y vecinos con sus pesos.
+    //Armamos una lista con los vecinos y pesos de cada nodo.
     public Map<Integer, Map<Integer, Double>> aListaAdyacencia(Grafo grafo) {
         if (grafo == null) {
             throw new IllegalArgumentException("El grafo no puede ser null");
@@ -147,8 +141,7 @@ public class ConversorRepresentaciones {
         return Collections.unmodifiableMap(resultado);
     }
 
-    // Crea un grafo desde una lista de adyacencia y conserva los IDs indicados.
-    // Entrada: lista de adyacencia y dirección; salida: grafo convertido.
+    //Armamos el grafo desde una lista y respetamos los IDs que vienen ahí.
     public Grafo desdeLista(
             Map<Integer, Map<Integer, Double>> lista,
             boolean dirigido) {
@@ -172,6 +165,16 @@ public class ConversorRepresentaciones {
                 if (vecino.getKey() == null || vecino.getValue() == null) {
                     throw new IllegalArgumentException(
                             "Los vecinos y sus pesos no pueden ser null");
+                }
+                if (!Double.isFinite(vecino.getValue())) {
+                    throw new IllegalArgumentException("Los pesos deben ser finitos");
+                }
+                if (!dirigido) {
+                    Map<Integer, Double> reversa = lista.get(vecino.getKey());
+                    Double pesoReverso = reversa == null ? null : reversa.get(idOrigen);
+                    if (pesoReverso != null && pesoReverso.doubleValue() != vecino.getValue()) {
+                        throw new IllegalArgumentException("Los pesos no dirigidos deben coincidir");
+                    }
                 }
                 idsOrdenados.add(vecino.getKey());
             }
@@ -234,8 +237,7 @@ public class ConversorRepresentaciones {
         return grafo;
     }
 
-    // Prepara nodos con las etiquetas de la matriz y conserva posiciones existentes.
-    // Entrada: matriz y grafo destino; salida: lista de nodos en orden matricial.
+    //Preparamos los nodos con sus nombres y dejamos los que ya estaban en su posición.
     private List<Nodo> prepararNodos(
             MatrizAdyacencia matriz,
             Grafo destino) {
@@ -266,8 +268,7 @@ public class ConversorRepresentaciones {
         return nodos;
     }
 
-    // Prepara aristas desde los valores distintos de cero de la matriz.
-    // Entrada: matriz y nodos correspondientes; salida: lista de aristas.
+    //Armamos las aristas con las celdas que no sean cero.
     private List<Arista> prepararAristas(
             MatrizAdyacencia matriz,
             List<Nodo> nodos) {

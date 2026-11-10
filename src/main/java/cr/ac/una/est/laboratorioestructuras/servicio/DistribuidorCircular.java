@@ -8,15 +8,12 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
-/**
- * Calcula posiciones para distribuir nodos en forma circular.
- */
+//Repartimos los nodos alrededor de un círculo para que el dibujo quede ordenado.
 public class DistribuidorCircular {
 
     private final double margen;
 
-    // Crea el distribuidor con el margen que separa los nodos del borde.
-    // Entrada: margen no negativo; salida: distribuidor inicializado.
+    //Guardamos cuánto espacio queremos dejar entre los nodos y el borde.
     public DistribuidorCircular(double margen) {
         if (!Double.isFinite(margen) || margen < 0) {
             throw new IllegalArgumentException(
@@ -25,8 +22,7 @@ public class DistribuidorCircular {
         this.margen = margen;
     }
 
-    // Calcula una posición para cada ID siguiendo una distribución circular.
-    // Entrada: IDs y dimensiones del área; salida: mapa inmutable de posiciones.
+    //Calculamos dónde va cada nodo dentro del área que tenemos.
     public Map<Integer, Posicion> calcular(
             List<Integer> ids,
             double ancho,

@@ -10,9 +10,7 @@ import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
 
-/**
- * Grafo dirigido o no dirigido, con posiciones en el plano.
- */
+//Acá llevamos los nodos y las conexiones, con o sin dirección.
 public class Grafo {
 
     private boolean dirigido;
@@ -22,32 +20,27 @@ public class Grafo {
     private int siguienteNodoId;
     private int siguienteAristaId;
 
-    // Inicializa un grafo vacío con el tipo de dirección indicado.
-    // Entrada: dirigido; salida: instancia vacía del grafo.
+    //Arrancamos con un grafo vacío y elegimos si lleva dirección.
     public Grafo(boolean dirigido) {
         this.dirigido = dirigido;
     }
 
-    // Indica si el grafo es dirigido.
-    // Entrada: ninguna; salida: true si el grafo es dirigido.
+    //Nos dice si las conexiones tienen dirección.
     public boolean isDirigido() {
         return dirigido;
     }
 
-    // Devuelve la vista no modificable de los nodos del grafo.
-    // Entrada: ninguna; salida: lista de nodos en orden de inserción.
+    //Dejamos ver los nodos, pero sin que puedan editar la lista desde afuera.
     public List<Nodo> getNodos() {
         return Collections.unmodifiableList(nodos);
     }
 
-    // Devuelve la vista no modificable de las aristas del grafo.
-    // Entrada: ninguna; salida: lista de aristas en orden de inserción.
+    //Dejamos ver las aristas, pero sin que puedan editar la lista desde afuera.
     public List<Arista> getAristas() {
         return Collections.unmodifiableList(aristas);
     }
 
-    // Busca un nodo por su identificador.
-    // Entrada: id del nodo; salida: Optional con el nodo o vacío si no existe.
+    //Buscamos el nodo por su ID; puede que no exista.
     public Optional<Nodo> buscarNodo(int id) {
         for (Nodo nodo : nodos) {
             if (nodo.getId() == id) {
@@ -57,31 +50,40 @@ public class Grafo {
         return Optional.empty();
     }
 
-    // Agrega un nodo con el siguiente identificador disponible.
-    // Entrada: etiqueta y coordenadas; salida: nodo agregado.
+    //Creamos un nodo usando el siguiente ID libre.
     public Nodo agregarNodo(String etiqueta, double x, double y) {
-        Nodo nodo = new Nodo(siguienteNodoId++, etiqueta, x, y);
+        Nodo nodo = new Nodo(siguienteNodoId, etiqueta, x, y);
+        siguienteNodoId++;
         nodos.add(nodo);
         notificar(TipoCambio.TOPOLOGIA);
         return nodo;
     }
 
-    // Conecta dos nodos existentes mediante una arista con peso.
-    // Entrada: IDs de origen y destino, y peso; salida: arista agregada.
+    //Unimos dos nodos que ya estén en el grafo.
     public Arista conectar(int origenId, int destinoId, double peso) {
         Nodo origen = buscarNodo(origenId)
                 .orElseThrow(() -> nodoInexistente(origenId));
         Nodo destino = buscarNodo(destinoId)
                 .orElseThrow(() -> nodoInexistente(destinoId));
 
-        Arista arista = new Arista(siguienteAristaId++, origen, destino, peso);
+        //Como la matriz guarda un peso por par, si ya estaban conectados solo cambiamos ese peso.
+        for (Arista existente : aristas) {
+            if ((existente.getOrigen() == origen && existente.getDestino() == destino)
+                    || (!dirigido && existente.getOrigen() == destino
+                    && existente.getDestino() == origen)) {
+                existente.setPeso(peso);
+                notificar(TipoCambio.TOPOLOGIA);
+                return existente;
+            }
+        }
+        Arista arista = new Arista(siguienteAristaId, origen, destino, peso);
+        siguienteAristaId++;
         aristas.add(arista);
         notificar(TipoCambio.TOPOLOGIA);
         return arista;
     }
 
-    // Elimina un nodo y todas las aristas conectadas a él.
-    // Entrada: id del nodo; salida: no devuelve valor y notifica si hubo cambios.
+    //Borramos el nodo y también las conexiones que lo usaban.
     public void eliminarNodo(int id) {
         Nodo nodo = buscarNodo(id).orElse(null);
         if (nodo == null) {
@@ -94,16 +96,14 @@ public class Grafo {
         notificar(TipoCambio.TOPOLOGIA);
     }
 
-    // Elimina una arista por su identificador.
-    // Entrada: id de la arista; salida: no devuelve valor y notifica si la eliminó.
+    //Buscamos la arista por su ID y la borramos.
     public void eliminarArista(int id) {
         if (aristas.removeIf(arista -> arista.getId() == id)) {
             notificar(TipoCambio.TOPOLOGIA);
         }
     }
 
-    // Cambia la posición de un nodo existente.
-    // Entrada: id del nodo y coordenadas nuevas; salida: no devuelve valor.
+    //Movemos el nodo si todavía está en el grafo.
     public void moverNodo(int id, double x, double y) {
         Nodo nodo = buscarNodo(id).orElse(null);
         if (nodo == null) {
@@ -114,9 +114,12 @@ public class Grafo {
         notificar(TipoCambio.POSICION);
     }
 
-    // Cambia varias posiciones y emite una sola notificación.
-    // Entrada: mapa de IDs a posiciones; salida: no devuelve valor.
+    //Movemos varios nodos y avisamos una sola vez al terminar.
     public void moverNodos(Map<Integer, Posicion> posiciones) {
+        if (posiciones == null || posiciones.entrySet().stream()
+                .anyMatch(e -> e.getKey() == null || e.getValue() == null)) {
+            throw new IllegalArgumentException("Las posiciones e IDs son obligatorios");
+        }
         boolean huboCambios = false;
 
         for (Map.Entry<Integer, Posicion> entrada : posiciones.entrySet()) {
@@ -133,8 +136,7 @@ public class Grafo {
         }
     }
 
-    // Reinicia el grafo y crea la cantidad indicada de nodos aislados.
-    // Entrada: dirección y cantidad de nodos; salida: no devuelve valor.
+    //Empezamos de cero con la cantidad de nodos que nos pidieron.
     public void reiniciar(boolean dirigido, int cantidad) {
         if (cantidad < 0) {
             throw new IllegalArgumentException(
@@ -149,31 +151,32 @@ public class Grafo {
         reemplazarContenido(dirigido, nuevosNodos, List.of());
     }
 
-    // Valida y reemplaza el contenido del grafo con una sola notificación.
-    // Entrada: dirección, nodos y aristas nuevas; salida: no devuelve valor.
+    //Revisamos los datos antes de cambiar todo el grafo y avisamos al terminar.
     public void reemplazarContenido(
             boolean dirigido,
             List<Nodo> nuevosNodos,
             List<Arista> nuevasAristas) {
         validarContenido(nuevosNodos, nuevasAristas, dirigido);
-        reemplazar(dirigido, nuevosNodos, nuevasAristas);
+        reemplazar(dirigido, new ArrayList<>(nuevosNodos), new ArrayList<>(nuevasAristas));
         notificar(TipoCambio.TOPOLOGIA);
     }
 
-    // Registra un oyente para recibir cambios del grafo.
-    // Entrada: listener que recibirá las notificaciones; salida: no devuelve valor.
+    //Agregamos a quien quiera enterarse de los cambios del grafo.
     public void addListener(GrafoListener listener) {
-        listeners.add(listener);
+        if (listener == null) {
+            throw new IllegalArgumentException("El listener es obligatorio");
+        }
+        if (!listeners.contains(listener)) {
+            listeners.add(listener);
+        }
     }
 
-    // Retira un oyente registrado.
-    // Entrada: listener que se desea retirar; salida: no devuelve valor.
+    //Quitamos a quien ya no necesite recibir los avisos.
     public void removeListener(GrafoListener listener) {
         listeners.remove(listener);
     }
 
-    // Comprueba IDs únicos y que cada arista conecte nodos contenidos en la lista.
-    // Entrada: nodos, aristas y dirección; salida: no devuelve valor o lanza excepción.
+    //Revisamos que no se repitan IDs y que las aristas usen nodos de esta lista.
     private void validarContenido(
             List<Nodo> nuevosNodos,
             List<Arista> nuevasAristas,
@@ -196,6 +199,7 @@ public class Grafo {
         }
 
         Set<Integer> idsAristas = new HashSet<>();
+        Set<String> pares = new HashSet<>();
         for (Arista arista : nuevasAristas) {
             if (arista == null) {
                 throw new IllegalArgumentException(
@@ -220,11 +224,16 @@ public class Grafo {
                 throw new IllegalArgumentException(
                         "El destino de la arista no pertenece a los nodos nuevos");
             }
+            int a = origen.getId();
+            int b = destino.getId();
+            String par = dirigido ? a + ":" + b : Math.min(a, b) + ":" + Math.max(a, b);
+            if (!pares.add(par)) {
+                throw new IllegalArgumentException("Hay más de una arista para el mismo par de nodos");
+            }
         }
     }
 
-    // Sustituye las listas actuales y calcula los siguientes IDs disponibles.
-    // Entrada: dirección, nodos y aristas validados; salida: no devuelve valor.
+    //Cambiamos las listas y dejamos listos los siguientes IDs.
     private void reemplazar(
             boolean dirigido,
             List<Nodo> nuevosNodos,
@@ -241,22 +250,19 @@ public class Grafo {
         siguienteAristaId = siguienteId(aristas, Arista::getId);
     }
 
-    // Notifica a una copia de los oyentes para tolerar cambios durante la notificación.
-    // Entrada: tipo de cambio; salida: no devuelve valor.
+    //Usamos una copia por si alguien se sale de los avisos mientras estamos avisando.
     private void notificar(TipoCambio tipo) {
         for (GrafoListener listener : List.copyOf(listeners)) {
             listener.grafoCambiado(this, tipo);
         }
     }
 
-    // Crea la excepción usada cuando un nodo solicitado no existe.
-    // Entrada: ID inexistente; salida: excepción descriptiva.
+    //Preparamos el error para cuando nos pidan un nodo que no existe.
     private static IllegalArgumentException nodoInexistente(int id) {
         return new IllegalArgumentException("No existe el nodo " + id);
     }
 
-    // Calcula el siguiente ID a partir del máximo ID de una colección.
-    // Entrada: elementos y función para obtener sus IDs; salida: máximo ID más uno.
+    //Buscamos el ID más grande y usamos el que le sigue.
     private static <T> int siguienteId(
             Collection<T> elementos,
             java.util.function.ToIntFunction<T> obtenerId) {

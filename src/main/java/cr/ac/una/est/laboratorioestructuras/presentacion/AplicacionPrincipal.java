@@ -18,19 +18,16 @@ import javafx.scene.control.ToggleGroup;
 import javafx.scene.layout.BorderPane;
 import javafx.scene.layout.HBox;
 import javafx.scene.layout.Priority;
-import javafx.scene.layout.SplitPane;
+import javafx.scene.control.SplitPane;
 import javafx.scene.layout.VBox;
 import javafx.stage.Stage;
 
-/**
- * Inicia la aplicación JavaFX y ensambla sus componentes.
- */
+//Acá armamos la ventana y conectamos las partes del programa.
 public class AplicacionPrincipal extends Application {
 
     private ControladorGrafo controlador;
 
-    // Construye los servicios, paneles y controles de la aplicación.
-    // Entrada: ventana principal; salida: interfaz mostrada y grafo inicializado.
+    //Creamos los servicios, los paneles y los botones de la ventana.
     @Override
     public void start(Stage stage) {
         Grafo grafo = new Grafo(false);
@@ -55,6 +52,7 @@ public class AplicacionPrincipal extends Application {
         controlador.inicializar();
 
         ToggleGroup grupoModo = new ToggleGroup();
+        mantenerSeleccion(grupoModo);
         ToggleButton modoMatriz = new ToggleButton("Matriz → Grafo");
         ToggleButton modoDibujo = new ToggleButton("Dibujar → Matriz");
         modoMatriz.setToggleGroup(grupoModo);
@@ -87,6 +85,7 @@ public class AplicacionPrincipal extends Application {
         controlesNuevo.setPadding(new Insets(6));
 
         ToggleGroup grupoHerramientas = new ToggleGroup();
+        mantenerSeleccion(grupoHerramientas);
         ToggleButton seleccionar = crearBotonHerramienta(
                 "Seleccionar",
                 HerramientaEdicion.SELECCIONAR,
@@ -189,8 +188,7 @@ public class AplicacionPrincipal extends Application {
         ejecutarAccion(stage, () -> controlador.crearNuevo(false, 5));
     }
 
-    // Libera los recursos del controlador al cerrar la aplicación.
-    // Entrada: ninguna; salida: no devuelve valor.
+    //Al cerrar la ventana, soltamos los recursos que estaba usando el controlador.
     @Override
     public void stop() {
         if (controlador != null) {
@@ -198,8 +196,13 @@ public class AplicacionPrincipal extends Application {
         }
     }
 
-    // Actualiza la edición disponible según la opción seleccionada.
-    // Entrada: modo matricial, controles de dibujo y etiqueta; salida: no devuelve valor.
+    private static void mantenerSeleccion(ToggleGroup grupo) {
+        grupo.selectedToggleProperty().addListener((o, anterior, actual) -> {
+            if (actual == null && anterior != null) anterior.setSelected(true);
+        });
+    }
+
+    //Activamos la edición de la matriz o del dibujo según la opción elegida.
     private void actualizarModo(
             boolean modoMatriz,
             HBox controlesDibujo,
@@ -212,8 +215,7 @@ public class AplicacionPrincipal extends Application {
                 : "Edita el dibujo; la matriz se actualiza como resultado.");
     }
 
-    // Crea un botón de herramienta conectado al controlador.
-    // Entrada: texto, herramienta, grupo y ventana; salida: botón configurado.
+    //Armamos un botón para cambiar la herramienta del dibujo.
     private ToggleButton crearBotonHerramienta(
             String texto,
             HerramientaEdicion herramienta,
@@ -227,8 +229,7 @@ public class AplicacionPrincipal extends Application {
         return boton;
     }
 
-    // Ejecuta una acción de interfaz y muestra sus errores al usuario.
-    // Entrada: ventana y acción; salida: no devuelve valor.
+    //Probamos la acción y mostramos un aviso si algo sale mal.
     private void ejecutarAccion(Stage stage, Runnable accion) {
         try {
             accion.run();
@@ -237,8 +238,7 @@ public class AplicacionPrincipal extends Application {
         }
     }
 
-    // Presenta un diálogo con el mensaje de error recibido.
-    // Entrada: ventana propietaria y texto del error; salida: no devuelve valor.
+    //Abrimos una ventanita con el mensaje del error.
     private void mostrarError(Stage stage, String mensaje) {
         Alert alerta = new Alert(Alert.AlertType.ERROR);
         alerta.initOwner(stage);

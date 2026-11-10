@@ -7,16 +7,13 @@ import javafx.scene.control.Label;
 import javafx.scene.control.TextArea;
 import javafx.scene.layout.VBox;
 
-/**
- * Presenta el resultado de un recorrido del grafo.
- */
+//Acá mostramos en qué orden se visitaron los nodos.
 public class PanelRecorrido extends VBox {
 
     private final Label titulo = new Label("Recorrido");
     private final TextArea resultado = new TextArea();
 
-    // Construye el panel que muestra el orden de un recorrido.
-    // Entrada: ninguna; salida: panel de recorrido inicializado.
+    //Armamos el espacio donde va a salir el recorrido.
     public PanelRecorrido() {
         setSpacing(6);
         resultado.setEditable(false);
@@ -25,8 +22,7 @@ public class PanelRecorrido extends VBox {
         getChildren().addAll(titulo, resultado);
     }
 
-    // Muestra el tipo de recorrido y sus nodos en orden.
-    // Entrada: tipo, IDs visitados y grafo; salida: no devuelve valor.
+    //Mostramos el tipo de recorrido y los nodos en el orden que se visitaron.
     public void mostrar(String tipo, List<Integer> orden, Grafo grafo) {
         if (tipo == null || orden == null || grafo == null) {
             throw new IllegalArgumentException(
@@ -55,8 +51,7 @@ public class PanelRecorrido extends VBox {
         resultado.setText(texto.toString());
     }
 
-    // Limpia el título y el resultado mostrado.
-    // Entrada: ninguna; salida: no devuelve valor.
+    //Borramos el recorrido que se estaba mostrando.
     public void limpiar() {
         titulo.setText("Recorrido");
         resultado.clear();

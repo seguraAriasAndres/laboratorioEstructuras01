@@ -4,9 +4,7 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
-/**
- * Representación matricial inmutable de un grafo.
- */
+//Esta es la matriz del grafo; una vez creada, sus datos no se cambian.
 public final class MatrizAdyacencia {
 
     private final boolean dirigido;
@@ -14,58 +12,55 @@ public final class MatrizAdyacencia {
     private final List<String> etiquetas;
     private final double[][] valores;
 
-    // Construye una matriz y conserva copias defensivas de sus datos.
-    // Entrada: dirección, IDs, etiquetas y valores; salida: matriz validada.
+    //Copiamos los datos para que nadie pueda cambiar la matriz desde afuera.
     public MatrizAdyacencia(
             boolean dirigido,
             List<Integer> idsNodos,
             List<String> etiquetas,
             double[][] valores) {
         this.dirigido = dirigido;
+        if (idsNodos == null || etiquetas == null
+                || idsNodos.stream().anyMatch(id -> id == null || id < 0 || id == Integer.MAX_VALUE)
+                || etiquetas.stream().anyMatch(e -> e == null || e.isBlank())) {
+            throw new IllegalArgumentException("Los IDs y las etiquetas deben ser válidos");
+        }
         this.idsNodos = List.copyOf(idsNodos);
         this.etiquetas = List.copyOf(etiquetas);
         this.valores = copiar(valores);
         validar();
     }
 
-    // Indica si la matriz representa un grafo dirigido.
-    // Entrada: ninguna; salida: true si la matriz es dirigida.
+    //Nos dice si las conexiones tienen dirección.
     public boolean isDirigido() {
         return dirigido;
     }
 
-    // Devuelve la cantidad de filas y columnas de la matriz.
-    // Entrada: ninguna; salida: tamaño de la matriz.
+    //Nos da la cantidad de filas y columnas.
     public int size() {
         return idsNodos.size();
     }
 
-    // Devuelve los IDs en el mismo orden que las filas y columnas.
-    // Entrada: ninguna; salida: lista inmutable de IDs de nodos.
+    //Los IDs van en el mismo orden que las filas y columnas.
     public List<Integer> getIdsNodos() {
         return idsNodos;
     }
 
-    // Devuelve la etiqueta asociada a un índice de fila o columna.
-    // Entrada: índice; salida: etiqueta del nodo correspondiente.
+    //Buscamos el nombre del nodo que está en esta posición de la matriz.
     public String getEtiqueta(int indice) {
         return etiquetas.get(indice);
     }
 
-    // Devuelve el peso ubicado en una celda.
-    // Entrada: fila y columna; salida: valor de la celda.
+    //Leemos el peso que hay en esta celda.
     public double getValor(int fila, int columna) {
         return valores[fila][columna];
     }
 
-    // Busca la posición matricial correspondiente a un ID real de nodo.
-    // Entrada: ID de nodo; salida: índice o -1 si el ID no está en la matriz.
+    //Buscamos en qué fila está el nodo; si no aparece, devolvemos -1.
     public int indiceDe(int idNodo) {
         return idsNodos.indexOf(idNodo);
     }
 
-    // Crea una matriz nueva con el valor actualizado y refleja el cambio si es no dirigida.
-    // Entrada: fila, columna y peso; salida: nueva matriz sin modificar esta instancia.
+    //Hacemos otra matriz con el cambio y lo reflejamos si el grafo no es dirigido.
     public MatrizAdyacencia conValor(int fila, int columna, double peso) {
         double[][] nuevosValores = copiar(valores);
         nuevosValores[fila][columna] = peso;
@@ -81,8 +76,7 @@ public final class MatrizAdyacencia {
                 nuevosValores);
     }
 
-    // Comprueba que IDs, etiquetas y dimensiones de la matriz sean consistentes.
-    // Entrada: ninguna; salida: no devuelve valor o lanza excepción si hay datos inválidos.
+    //Revisamos que los IDs, los nombres y los valores de la matriz tengan sentido.
     private void validar() {
         int cantidad = idsNodos.size();
 
@@ -109,11 +103,24 @@ public final class MatrizAdyacencia {
                 throw new IllegalArgumentException(
                         "La matriz no es de tamaño " + cantidad + "x" + cantidad);
             }
+            for (double valor : fila) {
+                if (!Double.isFinite(valor)) {
+                    throw new IllegalArgumentException("Los pesos de la matriz deben ser finitos");
+                }
+            }
+        }
+        if (!dirigido) {
+            for (int i = 0; i < cantidad; i++) {
+                for (int j = i + 1; j < cantidad; j++) {
+                    if (valores[i][j] != valores[j][i]) {
+                        throw new IllegalArgumentException("La matriz no dirigida debe ser simétrica");
+                    }
+                }
+            }
         }
     }
 
-    // Copia cada fila para impedir que cambios externos alteren la matriz.
-    // Entrada: matriz original; salida: copia profunda de sus filas.
+    //Copiamos las filas para que la matriz original quede aparte.
     private static double[][] copiar(double[][] original) {
         if (original == null) {
             throw new IllegalArgumentException(

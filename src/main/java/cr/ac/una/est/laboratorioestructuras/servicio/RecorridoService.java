@@ -13,13 +13,10 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
-/**
- * Ejecuta recorridos BFS y DFS sobre un grafo.
- */
+//Acá hacemos los recorridos BFS y DFS del grafo.
 public class RecorridoService {
 
-    // Recorre el grafo en anchura desde un nodo inicial.
-    // Entrada: grafo e ID inicial; salida: IDs visitados en orden BFS.
+    //Con BFS visitamos primero los vecinos más cercanos al nodo inicial.
     public List<Integer> bfs(Grafo grafo, int inicioId) {
         if (grafo == null) {
             throw new IllegalArgumentException("El grafo no puede ser null");
@@ -52,8 +49,7 @@ public class RecorridoService {
         return List.copyOf(orden);
     }
 
-    // Recorre el grafo en profundidad desde un nodo inicial.
-    // Entrada: grafo e ID inicial; salida: IDs visitados en orden DFS.
+    //Con DFS seguimos un camino hasta donde se pueda antes de regresar.
     public List<Integer> dfs(Grafo grafo, int inicioId) {
         if (grafo == null) {
             throw new IllegalArgumentException("El grafo no puede ser null");
@@ -90,8 +86,7 @@ public class RecorridoService {
         return List.copyOf(orden);
     }
 
-    // Construye vecinos según la dirección y el orden de las aristas del grafo.
-    // Entrada: grafo; salida: mapa inmutable de IDs a listas de vecinos únicos.
+    //Armamos los vecinos de cada nodo respetando la dirección y el orden de las conexiones.
     public Map<Integer, List<Integer>> construirVecindad(Grafo grafo) {
         if (grafo == null) {
             throw new IllegalArgumentException("El grafo no puede ser null");

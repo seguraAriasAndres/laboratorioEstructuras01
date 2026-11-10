@@ -1,12 +1,9 @@
 package cr.ac.una.est.laboratorioestructuras.presentacion;
 
-/**
- * Describe una edición solicitada para una celda de la matriz.
- */
+//Guardamos qué celda cambió y el valor que le pusieron.
 public record EdicionCelda(int fila, int columna, double valor) {
 
-    // Valida los datos de una edición de celda.
-    // Entrada: fila, columna y valor; salida: registro validado o excepción.
+    //Revisamos que la fila, la columna y el número sean válidos.
     public EdicionCelda {
         if (fila < 0 || columna < 0) {
             throw new IllegalArgumentException(
